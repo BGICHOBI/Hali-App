@@ -12,11 +12,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Flutter (beta channel for Dart 3.7.2)
+      - name: Set up Flutter (beta channel for Dart 3.7.x)
         uses: subosito/flutter-action@v2
         with:
           channel: 'beta'
-          flutter-version: '3.10.6'
+
 
       - name: Enable web
         run: flutter config --enable-web
