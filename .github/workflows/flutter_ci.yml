@@ -9,23 +9,23 @@ on:
 jobs:
   build-test-analyze:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        flutter-version: ['3.29.3']
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Set up Flutter (beta channel for Dart 3.7.2)
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: ${{ matrix.flutter-version }}
+          channel: 'beta'
+          flutter-version: '3.10.6'
 
-      - name: Enable Flutter web (if needed)
+      - name: Enable web
         run: flutter config --enable-web
 
       - name: Install dependencies
         run: flutter pub get
+
+      # … rest of your analyze/test/build steps …
+
 
       - name: Analyze code
         run: flutter analyze
