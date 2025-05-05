@@ -11,30 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Flutter
+  uses: subosito/flutter-action@v2
+  with:
+    channel: beta
 
-      - name: Set up Flutter (beta channel for Dart 3.7.x)
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'beta'
+      
+      
+    - name: Enable web
+run: flutter config --enable-web
+
+- name: Install dependencies
+run: flutter pub get
+
+- name: Analyze code
+run: flutter analyze
 
 
-      - name: Enable web
-        run: flutter config --enable-web
+- name: Run tests
+run: flutter test --coverage
 
-      - name: Install dependencies
-        run: flutter pub get
+- name: Build APK
+run: flutter build apk --release
 
-      # … rest of your analyze/test/build steps …
-
-
-      - name: Analyze code
-        run: flutter analyze
-
-      - name: Run tests
-        run: flutter test --coverage
-
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Build web release
-        run: flutter build web --release
+- name: Build web release
+run: flutter build web --release
