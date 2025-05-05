@@ -12,16 +12,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Flutter (beta channel for Dart 3.7.x)
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
-        with:
-          channel: beta
 
       - name: Enable web
         run: flutter config --enable-web
 
       - name: Install dependencies
         run: flutter pub get
+
+      # ... analyze / test / build steps follow ...
+
 
       - name: Analyze code
         run: flutter analyze
