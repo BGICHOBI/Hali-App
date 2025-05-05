@@ -43,3 +43,18 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android local settings (contains SDK path, should never be committed)
+android/local.properties
+
+# CocoaPods artifacts (iOS)
+ios/Podfile.lock
+ios/Pods/
+
+# Flutter-generated Firebase config (if you ever add it)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Bundled pubspec.lock (optional: lock file for reproducible builds)
+.pubspec.lock
+

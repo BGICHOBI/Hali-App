@@ -1,16 +1,36 @@
-# hali
+# Hali App
 
-A new Flutter project.
+<p align="center">
+  <img src="assets/images/hali_logo.png" alt="Hali Logo" width="120" />
+</p>
 
-## Getting Started
+**Hali** brings news, chat, marketplace, transactions and live streaming into one mobile app.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## 🚀 Features
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🚀 Features
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🚀 Features
+
+- **Music** — create & browse playlists; like & comment  
+- **E-Books** — read and manage e-books  
+- **Videos** — watch and upload educational, entertainment, or cultural films  
+- **News Feed** — browse and post articles, photos & videos  
+- **Live Streaming** — start/join real-time video sessions  
+- **Chat** — one-to-one messaging  
+- **Marketplace** — buy & sell products  
+- **Transactions** — send & receive money  
+- **Settings** — profile, notifications, privacy, logout
+
+
+
+---
+
+## 📦 Getting Started
+
+1. **Clone the repo**  
+   ```bash
+   git clone https://github.com/BGICHOBI/Hali-App.git
+   cd Hali-App
