@@ -12,10 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Flutter (stable channel)
-        uses: subosito/flutter-action@v2
-        with:
-          channel: stable
+      # ──────────────────────────────────────────────────────────────
+      # 1. Manually install Flutter from the stable branch
+      - name: Install Flutter SDK (stable)
+        run: |
+          git clone https://github.com/flutter/flutter.git --depth 1 -b stable
+          echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
 
       - name: Enable web
         run: flutter config --enable-web
