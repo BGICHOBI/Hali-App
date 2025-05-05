@@ -34,4 +34,3 @@ jobs:
 
       - name: Build web release
         run: flutter build web --release
-
