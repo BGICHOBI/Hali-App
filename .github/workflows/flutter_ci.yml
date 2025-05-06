@@ -1,3 +1,4 @@
+# .github/workflows/flutter_ci.yml
 name: Flutter CI
 
 on:
@@ -12,27 +13,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ──────────────────────────────────────────────────────────────
-      # 1. Manually install Flutter from the stable branch
+      # 1) Clone Flutter stable (with Dart 3.1.x)
       - name: Install Flutter SDK (stable)
         run: |
           git clone https://github.com/flutter/flutter.git --depth 1 -b stable
           echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
 
+      # 2) Enable web (if you need it)
       - name: Enable web
         run: flutter config --enable-web
 
+      # 3) Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
+      # 4) Static analysis
       - name: Analyze code
         run: flutter analyze
 
+      # 5) Run tests
       - name: Run tests
         run: flutter test --coverage
 
+      # 6) Build Android APK
       - name: Build APK
         run: flutter build apk --release
 
+      # 7) Build Web
       - name: Build web release
         run: flutter build web --release
