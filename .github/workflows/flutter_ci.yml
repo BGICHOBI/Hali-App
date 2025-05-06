@@ -1,4 +1,3 @@
-# .github/workflows/flutter_ci.yml
 name: Flutter CI
 
 on:
@@ -11,35 +10,27 @@ jobs:
   build-test-analyze:
     runs-on: ubuntu-latest
     steps:
-      # 1) checkout your code
       - uses: actions/checkout@v4
 
-      # 2) manually install Flutter stable (with Dart 3.1.x)
-      - name: Install Flutter SDK (stable)
-        run: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
-          echo "$HOME/flutter/bin" >> $GITHUB_PATH
+      - name: Set up Flutter (stable channel)
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
-      # 3) enable web if you need it
       - name: Enable web
         run: flutter config --enable-web
 
-      # 4) get dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # 5) analyze
       - name: Analyze code
         run: flutter analyze
 
-      # 6) run tests
-      - name: Run tests
-        run: flutter test --coverage
+            - name: Run tests (project only)
+        run: flutter test test
 
-      # 7) build APK
-      - name: Build Android release
+      - name: Build APK
         run: flutter build apk --release
 
-      # 8) build Web release
       - name: Build web release
         run: flutter build web --release
