@@ -23,10 +23,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Analyze code
-        run: flutter analyze
+            - name: Analyze code
+        run: flutter analyze lib
 
-            - name: Run tests (project only)
+      - name: Run tests (project only)
+        run: flutter test test
+
+      - name: Build Android release (project only)
         run: flutter test test
 
       - name: Build APK
