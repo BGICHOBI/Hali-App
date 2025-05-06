@@ -11,34 +11,35 @@ jobs:
   build-test-analyze:
     runs-on: ubuntu-latest
     steps:
+      # 1) checkout your code
       - uses: actions/checkout@v4
 
-      # 1) Clone Flutter stable (with Dart 3.1.x)
+      # 2) manually install Flutter stable (with Dart 3.1.x)
       - name: Install Flutter SDK (stable)
         run: |
-          git clone https://github.com/flutter/flutter.git --depth 1 -b stable
-          echo "${{ github.workspace }}/flutter/bin" >> $GITHUB_PATH
+          git clone https://github.com/flutter/flutter.git --depth 1 -b stable $HOME/flutter
+          echo "$HOME/flutter/bin" >> $GITHUB_PATH
 
-      # 2) Enable web (if you need it)
+      # 3) enable web if you need it
       - name: Enable web
         run: flutter config --enable-web
 
-      # 3) Install dependencies
+      # 4) get dependencies
       - name: Install dependencies
         run: flutter pub get
 
-      # 4) Static analysis
+      # 5) analyze
       - name: Analyze code
         run: flutter analyze
 
-      # 5) Run tests
+      # 6) run tests
       - name: Run tests
         run: flutter test --coverage
 
-      # 6) Build Android APK
-      - name: Build APK
+      # 7) build APK
+      - name: Build Android release
         run: flutter build apk --release
 
-      # 7) Build Web
+      # 8) build Web release
       - name: Build web release
         run: flutter build web --release
