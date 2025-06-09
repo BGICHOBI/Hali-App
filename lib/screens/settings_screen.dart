@@ -1,6 +1,9 @@
+// lib/screens/settings_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../main.dart'; // for themeModeProvider
+import 'package:firebase_analytics/firebase_analytics.dart';
+import '../main.dart'; // for themeModeProvider and global `analytics`
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -23,6 +26,12 @@ class SettingsScreen extends ConsumerWidget {
             title: const Text('Dark Mode'),
             value: isDarkMode,
             onChanged: (val) {
+              // Log theme toggle
+              analytics.logEvent(
+                name: 'settings_toggle_theme',
+                parameters: {'mode': val ? 'dark' : 'light'},
+              );
+              // Apply theme
               ref.read(themeModeProvider.notifier).state =
                   val ? ThemeMode.dark : ThemeMode.light;
             },
@@ -39,6 +48,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.person,
             title: 'Profile',
             onTap: () {
+              analytics.logEvent(name: 'settings_profile_tap');
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Profile clicked')),
               );
@@ -50,6 +60,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.notifications,
             title: 'Notifications',
             onTap: () {
+              analytics.logEvent(name: 'settings_notifications_tap');
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Notifications clicked')),
               );
@@ -61,8 +72,9 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.privacy_tip,
             title: 'Privacy Policy',
             onTap: () {
+              analytics.logEvent(name: 'settings_privacy_tap');
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Privacy clicked')),
+                const SnackBar(content: Text('Privacy Policy clicked')),
               );
             },
           ),
@@ -72,6 +84,7 @@ class SettingsScreen extends ConsumerWidget {
             icon: Icons.logout,
             title: 'Log Out',
             onTap: () {
+              analytics.logEvent(name: 'settings_logout');
               Navigator.pushNamedAndRemoveUntil(
                   context, '/login', (route) => false);
             },

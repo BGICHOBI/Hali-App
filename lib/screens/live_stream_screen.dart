@@ -1,24 +1,28 @@
+// lib/screens/live_stream_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:permission_handler/permission_handler.dart';
-import '../firebase_options.dart'; // Import to read your App ID if desired
+import 'package:firebase_analytics/firebase_analytics.dart';
 
-const String agoraAppId = '23e8dd789b934052a74e7d8dabdf6f11'; // TODO: replace with your Agora App ID
-const String channelName = 'test_channel';     // Or dynamic per session
-const String token = ''; // If you have a token server, place your temp token here or leave empty
+const String agoraAppId   = '23e8dd789b934052a74e7d8dabdf6f11';
+const String channelName  = 'test_channel';
+const String token        = ''; // or your token
 
 class LiveStreamScreen extends StatefulWidget {
-  const LiveStreamScreen({super.key});
+  const LiveStreamScreen({Key? key}) : super(key: key);
 
   @override
   State<LiveStreamScreen> createState() => _LiveStreamScreenState();
 }
 
 class _LiveStreamScreenState extends State<LiveStreamScreen> {
-  late RtcEngine _engine;
-  final List<int> _remoteUids = [];
+  late final RtcEngine _engine;
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
   bool _joined = false;
   int? _localUid;
+  final List<int> _remoteUids = [];
 
   @override
   void initState() {
@@ -27,41 +31,84 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   }
 
   Future<void> _initAgora() async {
-    // 1. Request permissions
+    // 1. Permissions
     await [Permission.camera, Permission.microphone].request();
 
-    // 2. Create engine
+    // 2. Engine init
     _engine = createAgoraRtcEngine();
-    await _engine.initialize(const RtcEngineContext(
-      appId: agoraAppId,
-      // token: token, // optional
-    ));
+    await _engine.initialize(RtcEngineContext(appId: agoraAppId));
 
-    // 3. Register event handlers
+    // 3. Handlers
     _engine.registerEventHandler(RtcEngineEventHandler(
-      onJoinChannelSuccess: (connection, elapsed) {
+      onJoinChannelSuccess: (connection, elapsed) async {
         setState(() {
-          _joined = true;
+          _joined   = true;
           _localUid = connection.localUid;
         });
+        await _analytics.logEvent(
+          name: 'live_join_channel',
+          parameters: {
+            'channel':   channelName,
+            'local_uid': connection.localUid!,
+          },
+        );
       },
-      onUserJoined: (connection, remoteUid, elapsed) {
+      onUserJoined: (connection, remoteUid, elapsed) async {
         setState(() => _remoteUids.add(remoteUid));
+        await _analytics.logEvent(
+          name: 'live_user_joined',
+          parameters: {
+            'channel':    channelName,
+            'remote_uid': remoteUid,
+          },
+        );
       },
-      onUserOffline: (connection, remoteUid, reason) {
+      onUserOffline: (connection, remoteUid, reason) async {
         setState(() => _remoteUids.remove(remoteUid));
+        await _analytics.logEvent(
+          name: 'live_user_left',
+          parameters: {
+            'channel':    channelName,
+            'remote_uid': remoteUid,
+            'reason':     reason.toString(),
+          },
+        );
       },
     ));
 
-    // 4. Enable video module & start camera
+    // 4. Video & join
     await _engine.enableVideo();
-    // 5. Join channel
     await _engine.joinChannel(
-      token: token,
-      channelId: channelName,
-      uid: 0,
-      options: const ChannelMediaOptions(),
+      token:      token,
+      channelId:  channelName,
+      uid:        0,
+      options:    const ChannelMediaOptions(),
     );
+  }
+
+  Future<void> _toggleChannel() async {
+    if (_joined) {
+      // log leave
+      await _analytics.logEvent(
+        name: 'live_leave_channel',
+        parameters: {
+          'channel':   channelName,
+          'local_uid': _localUid!,
+        },
+      );
+      await _engine.leaveChannel();
+      setState(() {
+        _joined = false;
+        _remoteUids.clear();    // ← clear instead of reassign
+      });
+    } else {
+      // re-join
+      await _analytics.logEvent(
+        name: 'live_rejoin_channel',
+        parameters: { 'channel': channelName },
+      );
+      _initAgora();
+    }
   }
 
   @override
@@ -76,7 +123,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
     return AgoraVideoView(
       controller: VideoViewController(
         rtcEngine: _engine,
-        canvas: const VideoCanvas(uid: 0),
+        canvas:    const VideoCanvas(uid: 0),
       ),
     );
   }
@@ -84,8 +131,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   Widget _renderRemoteVideo(int uid) {
     return AgoraVideoView(
       controller: VideoViewController.remote(
-        rtcEngine: _engine,
-        canvas: VideoCanvas(uid: uid),
+        rtcEngine:  _engine,
+        canvas:     VideoCanvas(uid: uid),
         connection: const RtcConnection(channelId: channelName),
       ),
     );
@@ -97,10 +144,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
       appBar: AppBar(title: const Text('Live Stream')),
       body: Stack(
         children: [
-          // Fullscreen local preview
           Positioned.fill(child: _renderLocalPreview()),
-
-          // Remote users in overlay
           Align(
             alignment: Alignment.topRight,
             child: SizedBox(
@@ -111,8 +155,6 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
               ),
             ),
           ),
-
-          // Controls
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
@@ -121,18 +163,8 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _joined ? Colors.red : Colors.green,
                 ),
+                onPressed: _toggleChannel,
                 child: Text(_joined ? 'Leave Channel' : 'Join Channel'),
-                onPressed: () {
-                  if (_joined) {
-                    _engine.leaveChannel();
-                    setState(() {
-                      _joined = false;
-                      _remoteUids.clear();
-                    });
-                  } else {
-                    _initAgora();
-                  }
-                },
               ),
             ),
           ),
@@ -141,3 +173,4 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
     );
   }
 }
+

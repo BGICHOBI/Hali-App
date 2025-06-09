@@ -1,6 +1,9 @@
-import 'package:flutter/material.dart';
+// lib/screens/news_detail_screen.dart
 
-class NewsDetailScreen extends StatelessWidget {
+import 'package:flutter/material.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+
+class NewsDetailScreen extends StatefulWidget {
   final String docId;
   final String title;
   final String body;
@@ -15,24 +18,58 @@ class NewsDetailScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<NewsDetailScreen> createState() => _NewsDetailScreenState();
+}
+
+class _NewsDetailScreenState extends State<NewsDetailScreen> {
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Log that the user viewed this news piece
+    _analytics.logEvent(
+      name: 'news_detail_view',
+      parameters: {
+        'doc_id': widget.docId,
+        'title': widget.title,
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
         centerTitle: true,
+        actions: [
+          if (widget.imageUrl != null)
+            IconButton(
+              icon: const Icon(Icons.share),
+              onPressed: () {
+                // Log a “share” event
+                _analytics.logEvent(
+                  name: 'news_detail_share',
+                  parameters: {'doc_id': widget.docId},
+                );
+                // TODO: hook up your share mechanism here
+              },
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (imageUrl != null && imageUrl!.isNotEmpty) ...[
+            if (widget.imageUrl != null && widget.imageUrl!.isNotEmpty) ...[
               Hero(
-                tag: 'news-$docId',
+                tag: 'news-${widget.docId}',
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.network(
-                    imageUrl!,
+                    widget.imageUrl!,
                     width: double.infinity,
                     height: 200,
                     fit: BoxFit.cover,
@@ -48,7 +85,7 @@ class NewsDetailScreen extends StatelessWidget {
               const SizedBox(height: 16),
             ],
             Text(
-              title,
+              widget.title,
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -56,7 +93,7 @@ class NewsDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              body,
+              widget.body,
               style: const TextStyle(fontSize: 16, height: 1.5),
             ),
           ],

@@ -1,5 +1,8 @@
+// lib/screens/news_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'news_detail_screen.dart';
 
 class NewsScreen extends StatefulWidget {
@@ -10,6 +13,7 @@ class NewsScreen extends StatefulWidget {
 }
 
 class _NewsScreenState extends State<NewsScreen> {
+  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   String _searchTerm = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -17,6 +21,40 @@ class _NewsScreenState extends State<NewsScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchSubmitted(String term) {
+    final trimmed = term.trim();
+    if (trimmed.isEmpty) return;
+    // Log the search event
+    _analytics.logEvent(
+      name: 'news_search',
+      parameters: {'search_term': trimmed},
+    );
+    setState(() => _searchTerm = trimmed.toLowerCase());
+  }
+
+  void _onArticleTap(String docId, String title) {
+    // Log the select event
+    _analytics.logEvent(
+      name: 'news_select',
+      parameters: {
+        'doc_id': docId,
+        'title': title,
+      },
+    );
+    // Navigate
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NewsDetailScreen(
+          docId: docId,
+          title: title,
+          body: '',     // you'll pass actual body/url here
+          imageUrl: null,
+        ),
+      ),
+    );
   }
 
   @override
@@ -49,8 +87,12 @@ class _NewsScreenState extends State<NewsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+              // update filter as you type
               onChanged: (val) => setState(
-                  () => _searchTerm = val.trim().toLowerCase()),
+                () => _searchTerm = val.trim().toLowerCase(),
+              ),
+              // fire analytics when user submits (presses “search” on keyboard)
+              onSubmitted: _onSearchSubmitted,
             ),
           ),
 
@@ -63,12 +105,10 @@ class _NewsScreenState extends State<NewsScreen> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return Center(
-                      child: Text('Error: ${snapshot.error}'));
+                  return Center(child: Text('Error: ${snapshot.error}'));
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 // Raw list of docs
@@ -78,14 +118,13 @@ class _NewsScreenState extends State<NewsScreen> {
                 final filtered = _searchTerm.isEmpty
                     ? docs
                     : docs.where((doc) {
-                        final title = (doc['title'] as String)
-                            .toLowerCase();
+                        final title =
+                            (doc['title'] as String).toLowerCase();
                         return title.contains(_searchTerm);
                       }).toList();
 
                 if (filtered.isEmpty) {
-                  return const Center(
-                      child: Text('No matching articles'));
+                  return const Center(child: Text('No matching articles'));
                 }
 
                 return ListView.builder(
@@ -100,19 +139,7 @@ class _NewsScreenState extends State<NewsScreen> {
                     final docId = doc.id;
 
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => NewsDetailScreen(
-                              docId: docId,
-                              title: title,
-                              body: body,
-                              imageUrl: imageUrl,
-                            ),
-                          ),
-                        );
-                      },
+                      onTap: () => _onArticleTap(docId, title),
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 16),
                         shape: RoundedRectangleBorder(
@@ -120,11 +147,9 @@ class _NewsScreenState extends State<NewsScreen> {
                         ),
                         elevation: 4,
                         child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (imageUrl != null &&
-                                imageUrl.isNotEmpty)
+                            if (imageUrl != null && imageUrl.isNotEmpty)
                               Hero(
                                 tag: 'news-$docId',
                                 child: ClipRRect(
@@ -135,15 +160,11 @@ class _NewsScreenState extends State<NewsScreen> {
                                     height: 180,
                                     width: double.infinity,
                                     fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (_, __, ___) => Container(
+                                    errorBuilder: (_, __, ___) => Container(
                                       height: 180,
-                                      color:
-                                          Colors.grey[300],
-                                      alignment:
-                                          Alignment.center,
-                                      child: const Icon(
-                                          Icons.broken_image,
+                                      color: Colors.grey[300],
+                                      alignment: Alignment.center,
+                                      child: const Icon(Icons.broken_image,
                                           size: 48),
                                     ),
                                   ),
@@ -159,11 +180,9 @@ class _NewsScreenState extends State<NewsScreen> {
                                     title,
                                     style: const TextStyle(
                                         fontSize: 20,
-                                        fontWeight:
-                                            FontWeight.bold),
+                                        fontWeight: FontWeight.bold),
                                   ),
-                                  const SizedBox(
-                                      height: 8),
+                                  const SizedBox(height: 8),
                                   Text(
                                     body,
                                     maxLines: 3,

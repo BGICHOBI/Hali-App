@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 
 class ChatScreen extends StatefulWidget {
-  const ChatScreen({super.key});
+  const ChatScreen({Key? key}) : super(key: key);
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -13,17 +14,66 @@ class _ChatScreenState extends State<ChatScreen> {
   final _msgCtrl = TextEditingController();
   final _firestore = FirebaseFirestore.instance;
   final _auth = FirebaseAuth.instance;
+  final _analytics = FirebaseAnalytics.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Log screen open with timestamp
+    _analytics.logEvent(
+      name: 'chat_screen_opened',
+      parameters: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+  }
 
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
-    if (text.isEmpty) return;
+    final nowIso = DateTime.now().toIso8601String();
+
+    if (text.isEmpty) {
+      // Log failed empty-send with timestamp
+      await _analytics.logEvent(
+        name: 'message_send_failed_empty',
+        parameters: {
+          'timestamp': nowIso,
+        },
+      );
+      return;
+    }
+
     _msgCtrl.clear();
 
+    // Write to Firestore
     await _firestore.collection('chats').add({
       'text': text,
       'sender': _auth.currentUser?.email ?? 'anonymous',
       'timestamp': FieldValue.serverTimestamp(),
     });
+
+    // Log successful send with length, sender, and timestamp
+    await _analytics.logEvent(
+      name: 'message_sent',
+      parameters: {
+        'message_length': text.length,
+        'sender': _auth.currentUser?.email ?? 'anonymous',
+        'timestamp': nowIso,
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    // Log screen close with timestamp
+    _analytics.logEvent(
+      name: 'chat_screen_closed',
+      parameters: {
+        'timestamp': DateTime.now().toIso8601String(),
+      },
+    );
+    _msgCtrl.dispose();
+    super.dispose();
   }
 
   @override

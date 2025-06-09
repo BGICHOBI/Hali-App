@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'post_product_screen.dart';
 
-class MarketplaceScreen extends StatelessWidget {
-  const MarketplaceScreen({super.key});
+/// Global analytics instance
+final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+
+class MarketplaceScreen extends StatefulWidget {
+  const MarketplaceScreen({Key? key}) : super(key: key);
+
+  @override
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
+}
+
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Log that user has viewed the marketplace
+    analytics.setCurrentScreen(screenName: 'MarketplaceScreen');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,14 +50,24 @@ class MarketplaceScreen extends StatelessWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Post a Product')),
-          );
-        },
         backgroundColor: Colors.teal,
-        child: const Icon(Icons.add),
         tooltip: 'Post Product',
+        child: const Icon(Icons.add),
+        onPressed: () async {
+          // Log that the user started posting an item
+          await analytics.logEvent(name: 'start_post_item');
+
+          // Navigate to the PostProductScreen and await a "refresh" signal
+          final didPost = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(builder: (_) => const PostProductScreen()),
+          );
+
+          if (didPost == true) {
+            // You could re-fetch your live product list here.
+            setState(() {});
+          }
+        },
       ),
     );
   }
@@ -62,7 +89,15 @@ class MarketplaceScreen extends StatelessWidget {
         subtitle: Text(price),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: () {
-          // Optional: View product details
+          // Log which item was viewed
+          analytics.logEvent(
+            name: 'view_item',
+            parameters: {
+              'item_title': title,
+              'item_price': price,
+            },
+          );
+          // TODO: push to a detailed ProductDetailScreen
         },
       ),
     );

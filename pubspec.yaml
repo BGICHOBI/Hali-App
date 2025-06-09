@@ -39,16 +39,25 @@ dependencies:
   firebase_auth: ^5.5.3             # Email/Google auth :contentReference[oaicite:1]{index=1}
   cloud_firestore: ^5.6.7           # Firestore database :contentReference[oaicite:2]{index=2}
   firebase_storage: ^12.4.5         # Upload/download media :contentReference[oaicite:3]{index=3}
+  firebase_analytics: ^11.1.0 
+  firebase_crashlytics: ^4.3.5
+
 
   # Permissions & live stream
-  permission_handler: ^11.0.0
+  permission_handler: ^12.0.0+1
   agora_rtc_engine: ^6.2.1
   
   
   video_player: ^2.6.1
 
+  just_audio:      ^0.9.34
+  share_plus:      ^6.3.0
+
   flutter_riverpod: ^2.3.6
 
+
+  http: ^0.13.5
+  url_launcher: ^6.1.7
 
 dev_dependencies:
   flutter_test:
@@ -66,8 +75,9 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  # …
   assets:
-    - assets/images/
+    - assets/images/hali_logo.png
 
 
   # The following line ensures that the Material Icons font is

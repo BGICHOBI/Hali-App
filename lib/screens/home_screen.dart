@@ -1,7 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+
+/// Global Analytics instance (same one you attached to your navigatorObservers)
+final FirebaseAnalytics analytics = FirebaseAnalytics.instance;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  // Helper to log & then perform an action
+  Future<void> _onFeatureTap({
+    required String feature,
+    required VoidCallback navigate,
+  }) async {
+    try {
+      await analytics.logEvent(
+        name: 'select_feature',
+        parameters: {'feature': feature},
+      );
+    } catch (e, st) {
+      // Report any logging error
+      await FirebaseCrashlytics.instance
+          .recordError(e, st, reason: 'logging $feature tap');
+    }
+    navigate();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +59,10 @@ class HomeScreen extends StatelessWidget {
               title: 'News Feed',
               subtitle: 'Stay updated with latest news',
               onTap: () {
-                // Optional future navigation
+                _onFeatureTap(
+                  feature: 'news_feed',
+                  navigate: () => Navigator.pushNamed(context, '/news'),
+                );
               },
             ),
             const SizedBox(height: 16),
@@ -46,7 +72,10 @@ class HomeScreen extends StatelessWidget {
               title: 'Chat with Friends',
               subtitle: 'Connect instantly',
               onTap: () {
-                // Optional future navigation
+                _onFeatureTap(
+                  feature: 'chat',
+                  navigate: () => Navigator.pushNamed(context, '/chat'),
+                );
               },
             ),
             const SizedBox(height: 16),
@@ -56,7 +85,10 @@ class HomeScreen extends StatelessWidget {
               title: 'Live Streaming',
               subtitle: 'Start or join live streams',
               onTap: () {
-                Navigator.pushNamed(context, '/live');
+                _onFeatureTap(
+                  feature: 'live_streaming',
+                  navigate: () => Navigator.pushNamed(context, '/live'),
+                );
               },
             ),
           ],
@@ -65,11 +97,13 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeatureCard(BuildContext context,
-      {required IconData icon,
-      required String title,
-      required String subtitle,
-      required VoidCallback onTap}) {
+  Widget _buildFeatureCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 3,
